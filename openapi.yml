@@ -1,0 +1,92 @@
+openapi: 3.0.3
+info:
+  title: RuneLite Config API
+  version: 1.0.0
+security:
+  - token: [ ]
+paths:
+  /config:
+    get:
+      summary: Gets all the authenticated user's configs
+      responses:
+        200:
+          description: The user configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Configuration'
+        401:
+          description: Access denied
+  /config/{key}:
+    put:
+      summary: Creates/updates a single config entry
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+      responses:
+        200:
+          description: Key created/updated successfully
+        401:
+          description: Access denied
+    patch:
+      summary: Batch create/update config entries
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Configuration'
+      responses:
+        200:
+          description: Keys created/updated successfully
+        401:
+          description: Access denied
+    delete:
+      summary: Deletes a config entry
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Key deleted successfully
+        401:
+          description: Access denied
+components:
+  securitySchemes:
+    token:
+      name: RUNELITE-AUTH
+      type: apiKey
+      in: header
+  schemas:
+    Configuration:
+      type: object
+      properties:
+        config:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConfigEntry'
+    ConfigEntry:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
