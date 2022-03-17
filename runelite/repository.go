@@ -8,10 +8,10 @@ type ConfigRepository interface {
 }
 
 type Configuration struct {
-	Config []ConfigEntry
+	Config []ConfigEntry `json:"config"`
 }
 
 type ConfigEntry struct {
-	Key   string
-	Value string
+	Key   string `json:"key"`
+	Value string `json:"value"`
 }

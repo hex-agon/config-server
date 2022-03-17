@@ -2,6 +2,7 @@ package runelite
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -29,11 +30,41 @@ func sanitizeConfigKey(key string) string {
 	return strings.ReplaceAll(key, ".", ":")
 }
 
+func serializeGroup(groupKey string, group interface{}) []ConfigEntry {
+	groupMap := group.(map[string]interface{})
+	entries := make([]ConfigEntry, len(groupMap))
+	for key, value := range groupMap {
+		valueJson, err := serializeGroupValue(value)
+
+		if err != nil {
+			continue
+		}
+		entries = append(entries, ConfigEntry{
+			Key:   groupKey + "." + sanitizeConfigKey(key),
+			Value: valueJson,
+		})
+	}
+	return entries
+}
+
+func serializeGroupValue(value interface{}) (string, error) {
+	switch value.(type) {
+	case string:
+		return value.(string), nil
+	default:
+		marshal, err := json.Marshal(value)
+		if err != nil {
+			return "", err
+		}
+		return string(marshal), nil
+	}
+}
+
 func (m *mongoRepository) FindByUserId(userId int) (*Configuration, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	var document map[string]string
+	var document map[string]interface{}
 
 	err := m.collection.FindOne(
 		ctx,
@@ -46,14 +77,9 @@ func (m *mongoRepository) FindByUserId(userId int) (*Configuration, error) {
 	} else if err != nil {
 		return nil, err
 	} else {
-		entries := make([]ConfigEntry, len(document))
-		idx := 0
-		for key, value := range document {
-			entries[idx] = ConfigEntry{
-				Key:   key,
-				Value: value,
-			}
-			idx++
+		entries := make([]ConfigEntry, 0)
+		for groupKey, group := range document {
+			entries = append(entries, serializeGroup(groupKey, group)...)
 		}
 		configuration := &Configuration{
 			Config: entries,

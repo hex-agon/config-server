@@ -20,7 +20,7 @@ func Authenticated(
 		} else {
 			newCtx := context.WithValue(request.Context(), ctxToken, authToken)
 			// TODO: Fetch userId from somewhere
-			handler(1000, writer, request.WithContext(newCtx), params)
+			handler(153069, writer, request.WithContext(newCtx), params)
 		}
 	}
 }
