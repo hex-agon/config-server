@@ -1,10 +1,10 @@
 package runelite
 
 type ConfigRepository interface {
-	FindByUserId(userId int) (*Configuration, error)
-	Save(userId int, entry *ConfigEntry) error
-	SaveBatch(userId int, configuration *Configuration) error
-	DeleteKey(userId int, key string) error
+	FindByUserId(userId int64) (*Configuration, error)
+	Save(userId int64, entry *ConfigEntry) error
+	SaveBatch(userId int64, configuration *Configuration) error
+	DeleteKey(userId int64, key string) error
 }
 
 type Configuration struct {
@@ -14,4 +14,8 @@ type Configuration struct {
 type ConfigEntry struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
+}
+
+type SessionRepository interface {
+	FindUserIdByUuid(uuid string) (int64, error)
 }

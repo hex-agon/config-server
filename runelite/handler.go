@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-type AuthorizedHttpHandle func(userId int, writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+type AuthorizedHttpHandle func(userId int64, writer http.ResponseWriter, request *http.Request, params httprouter.Params)
 
 type Handlers struct {
 	logger     *zap.Logger
@@ -22,7 +22,7 @@ func NewHandlers(logger *zap.Logger, repository ConfigRepository) *Handlers {
 	}
 }
 
-func (h *Handlers) HandleGet(userId int, writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (h *Handlers) HandleGet(userId int64, writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	configuration, err := h.repository.FindByUserId(userId)
 
 	if configuration == nil {
@@ -43,7 +43,7 @@ func (h *Handlers) HandleGet(userId int, writer http.ResponseWriter, request *ht
 	}
 }
 
-func (h *Handlers) HandlePut(userId int, writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (h *Handlers) HandlePut(userId int64, writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	key := params.ByName("key")
 	value, err := ioutil.ReadAll(request.Body)
 
@@ -63,7 +63,7 @@ func (h *Handlers) HandlePut(userId int, writer http.ResponseWriter, request *ht
 	}
 }
 
-func (h *Handlers) HandlePatch(userId int, writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (h *Handlers) HandlePatch(userId int64, writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	var configuration Configuration
 	err := json.NewDecoder(request.Body).Decode(&configuration)
 
@@ -80,7 +80,7 @@ func (h *Handlers) HandlePatch(userId int, writer http.ResponseWriter, request *
 	}
 }
 
-func (h *Handlers) HandleDelete(userId int, writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (h *Handlers) HandleDelete(userId int64, writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	key := params.ByName("key")
 	err := h.repository.DeleteKey(userId, key)
 

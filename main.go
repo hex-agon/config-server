@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"github.com/caarlos0/env/v6"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/julienschmidt/httprouter"
 	"github.com/runelite/config-server/runelite"
 	"go.mongodb.org/mongo-driver/bson"
@@ -18,6 +20,7 @@ import (
 type config struct {
 	Port            string `env:"PORT" envDefault:"8080"`
 	MongodbUri      string `env:"MONGODB_URI,required,notEmpty"`
+	MysqlUri        string `env:"MYSQL_URI,required,notEmpty"`
 	MaxPayloadBytes int64  `env:"MAX_PAYLOAD_BYTES" envDefault:"5242880"` // 5mb default
 }
 
@@ -31,7 +34,7 @@ func (h *maxBytesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.handler.ServeHTTP(w, r)
 }
 
-func setupMongoDatabase(cfg config, logger *zap.Logger) (*mongo.Client, *mongo.Collection) {
+func setupMongoDatabase(cfg *config, logger *zap.Logger) (*mongo.Client, *mongo.Collection) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -62,6 +65,21 @@ func setupMongoDatabase(cfg config, logger *zap.Logger) (*mongo.Client, *mongo.C
 	return mongodb, cfgCollection
 }
 
+func setupMysql(cfg *config, logger *zap.Logger) *sql.DB {
+	mysql, err := sql.Open("mysql", cfg.MysqlUri)
+	if err != nil {
+		logger.Fatal("Failed to connect to mysql", zap.Error(err))
+	}
+	err = mysql.Ping()
+	if err != nil {
+		logger.Fatal("Failed to ping mysql", zap.Error(err))
+	}
+	mysql.SetConnMaxLifetime(time.Minute * 3)
+	mysql.SetMaxOpenConns(10)
+	mysql.SetMaxIdleConns(10)
+	return mysql
+}
+
 func main() {
 	loggerCfg := zap.NewDevelopmentConfig()
 	loggerCfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
@@ -69,8 +87,8 @@ func main() {
 
 	defer logger.Sync()
 
-	cfg := config{}
-	if err := env.Parse(&cfg); err != nil {
+	cfg := &config{}
+	if err := env.Parse(cfg); err != nil {
 		logger.Fatal("Failed to load env config", zap.Error(err))
 	}
 	mongodb, cfgCollection := setupMongoDatabase(cfg, logger)
@@ -82,13 +100,19 @@ func main() {
 			logger.Fatal("Failed to disconnect from mongodb", zap.Error(err))
 		}
 	}()
-	router := httprouter.New()
-	handlers := runelite.NewHandlers(logger, runelite.NewRepository(cfgCollection))
 
-	router.GET("/config", runelite.Authenticated(handlers.HandleGet))
-	router.PUT("/config/:key", runelite.Authenticated(handlers.HandlePut))
-	router.PATCH("/config/:key", runelite.Authenticated(handlers.HandlePatch))
-	router.DELETE("/config/:key", runelite.Authenticated(handlers.HandleDelete))
+	mysql := setupMysql(cfg, logger)
+	defer mysql.Close()
+
+	router := httprouter.New()
+	handlers := runelite.NewHandlers(logger, runelite.NewConfigRepository(cfgCollection))
+
+	authFilter := runelite.NewAuthFilter(runelite.NewSessionRepository(mysql))
+
+	router.GET("/config", authFilter.Filtered(handlers.HandleGet))
+	router.PUT("/config/:key", authFilter.Filtered(handlers.HandlePut))
+	router.PATCH("/config/:key", authFilter.Filtered(handlers.HandlePatch))
+	router.DELETE("/config/:key", authFilter.Filtered(handlers.HandleDelete))
 
 	logger.Info("Starting server on port " + cfg.Port)
 	err := http.ListenAndServe(":"+cfg.Port, &maxBytesHandler{handler: router, maxBytes: cfg.MaxPayloadBytes})

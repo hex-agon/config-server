@@ -11,12 +11,12 @@ import (
 	"time"
 )
 
-type mongoRepository struct {
+type mongoConfigRepository struct {
 	collection *mongo.Collection
 }
 
-func NewRepository(collection *mongo.Collection) ConfigRepository {
-	return &mongoRepository{
+func NewConfigRepository(collection *mongo.Collection) ConfigRepository {
+	return &mongoConfigRepository{
 		collection: collection,
 	}
 }
@@ -60,7 +60,7 @@ func serializeGroupValue(value interface{}) (string, error) {
 	}
 }
 
-func (m *mongoRepository) FindByUserId(userId int) (*Configuration, error) {
+func (m *mongoConfigRepository) FindByUserId(userId int64) (*Configuration, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -88,7 +88,7 @@ func (m *mongoRepository) FindByUserId(userId int) (*Configuration, error) {
 	}
 }
 
-func (m *mongoRepository) Save(userId int, entry *ConfigEntry) error {
+func (m *mongoConfigRepository) Save(userId int64, entry *ConfigEntry) error {
 	key := entry.Key
 
 	if invalidConfigKey(key) {
@@ -103,7 +103,7 @@ func (m *mongoRepository) Save(userId int, entry *ConfigEntry) error {
 	return err
 }
 
-func (m *mongoRepository) SaveBatch(userId int, configuration *Configuration) error {
+func (m *mongoConfigRepository) SaveBatch(userId int64, configuration *Configuration) error {
 	entries := bson.M{}
 	// filter invalid keys
 	for _, entry := range configuration.Config {
@@ -120,7 +120,7 @@ func (m *mongoRepository) SaveBatch(userId int, configuration *Configuration) er
 	return err
 }
 
-func (m *mongoRepository) DeleteKey(userId int, key string) error {
+func (m *mongoConfigRepository) DeleteKey(userId int64, key string) error {
 	if invalidConfigKey(key) {
 		return errors.New("invalid config key")
 	}
