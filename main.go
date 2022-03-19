@@ -6,7 +6,6 @@ import (
 	"github.com/caarlos0/env/v6"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/julienschmidt/httprouter"
-	"github.com/runelite/config-server/runelite"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -106,9 +105,9 @@ func main() {
 	defer mysql.Close()
 
 	router := httprouter.New()
-	handlers := runelite.NewHandlers(logger, runelite.NewConfigRepository(cfgCollection, cfg.MaxConfigValueLength))
+	handlers := NewHandlers(logger, NewConfigRepository(cfgCollection, cfg.MaxConfigValueLength))
 
-	authFilter := runelite.NewAuthFilter(runelite.NewSessionRepository(mysql))
+	authFilter := NewAuthFilter(NewSessionRepository(mysql))
 
 	router.GET("/config", authFilter.Filtered(handlers.HandleGet))
 	router.PUT("/config/:key", authFilter.Filtered(handlers.HandlePut))

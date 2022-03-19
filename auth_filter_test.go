@@ -1,4 +1,4 @@
-package runelite
+package main
 
 import (
 	"database/sql"

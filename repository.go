@@ -1,4 +1,4 @@
-package runelite
+package main
 
 type ConfigRepository interface {
 	FindByUserId(userId int64) (*Configuration, error)
