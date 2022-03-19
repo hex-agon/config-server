@@ -5,7 +5,8 @@ import (
 	"database/sql"
 	"github.com/caarlos0/env/v6"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/julienschmidt/httprouter"
+	"github.com/newrelic/go-agent/v3/integrations/nrhttprouter"
+	"github.com/newrelic/go-agent/v3/newrelic"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -22,6 +23,7 @@ type config struct {
 	MysqlUri             string `env:"MYSQL_URI,required,notEmpty"`
 	MaxPayloadBytes      int64  `env:"MAX_PAYLOAD_BYTES" envDefault:"5242880"` // 5mb default
 	MaxConfigValueLength int64  `env:"MAX_CONFIG_VALUE_LENGTH" envDefault:"262144"`
+	NewRelicLicense      string `env:"NR_LICENSE"`
 }
 
 type maxBytesHandler struct {
@@ -104,7 +106,16 @@ func main() {
 	mysql := setupMysql(cfg, logger)
 	defer mysql.Close()
 
-	router := httprouter.New()
+	nrelic, err := newrelic.NewApplication(
+		newrelic.ConfigAppName("config-server"),
+		newrelic.ConfigLicense(cfg.NewRelicLicense),
+		newrelic.ConfigEnabled(cfg.NewRelicLicense != ""),
+	)
+
+	if cfg.NewRelicLicense != "" {
+		logger.Info("NewRelic agent is enabled")
+	}
+	router := nrhttprouter.New(nrelic)
 	handlers := NewHandlers(logger, NewConfigRepository(cfgCollection, cfg.MaxConfigValueLength))
 
 	authFilter := NewAuthFilter(NewSessionRepository(mysql))
@@ -115,7 +126,7 @@ func main() {
 	router.DELETE("/config/:key", authFilter.Filtered(handlers.HandleDelete))
 
 	logger.Info("Starting server on port " + cfg.Port)
-	err := http.ListenAndServe(":"+cfg.Port, &maxBytesHandler{handler: router, maxBytes: cfg.MaxPayloadBytes})
+	err = http.ListenAndServe(":"+cfg.Port, &maxBytesHandler{handler: router, maxBytes: cfg.MaxPayloadBytes})
 	if err != nil {
 		logger.Fatal("Failed to start server", zap.Error(err))
 	}
