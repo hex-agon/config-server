@@ -33,16 +33,16 @@ func sanitizeConfigKey(key string) string {
 func serializeGroup(groupKey string, group interface{}) []ConfigEntry {
 	groupMap := group.(map[string]interface{})
 	entries := make([]ConfigEntry, len(groupMap))
+	idx := 0
 	for key, value := range groupMap {
-		valueJson, err := serializeGroupValue(value)
+		serializedValue, err := serializeGroupValue(value)
 
 		if err != nil {
 			continue
 		}
-		entries = append(entries, ConfigEntry{
-			Key:   groupKey + "." + sanitizeConfigKey(key),
-			Value: valueJson,
-		})
+		entries[idx].Key = groupKey + "." + sanitizeConfigKey(key)
+		entries[idx].Value = serializedValue
+		idx++
 	}
 	return entries
 }
