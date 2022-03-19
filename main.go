@@ -18,10 +18,11 @@ import (
 )
 
 type config struct {
-	Port            string `env:"PORT" envDefault:"8080"`
-	MongodbUri      string `env:"MONGODB_URI,required,notEmpty"`
-	MysqlUri        string `env:"MYSQL_URI,required,notEmpty"`
-	MaxPayloadBytes int64  `env:"MAX_PAYLOAD_BYTES" envDefault:"5242880"` // 5mb default
+	Port                 string `env:"PORT" envDefault:"8080"`
+	MongodbUri           string `env:"MONGODB_URI,required,notEmpty"`
+	MysqlUri             string `env:"MYSQL_URI,required,notEmpty"`
+	MaxPayloadBytes      int64  `env:"MAX_PAYLOAD_BYTES" envDefault:"5242880"` // 5mb default
+	MaxConfigValueLength int64  `env:"MAX_CONFIG_VALUE_LENGTH" envDefault:"262144"`
 }
 
 type maxBytesHandler struct {
@@ -105,7 +106,7 @@ func main() {
 	defer mysql.Close()
 
 	router := httprouter.New()
-	handlers := runelite.NewHandlers(logger, runelite.NewConfigRepository(cfgCollection))
+	handlers := runelite.NewHandlers(logger, runelite.NewConfigRepository(cfgCollection, cfg.MaxConfigValueLength))
 
 	authFilter := runelite.NewAuthFilter(runelite.NewSessionRepository(mysql))
 

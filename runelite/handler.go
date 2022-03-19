@@ -34,12 +34,13 @@ func (h *Handlers) HandleGet(userId int64, writer http.ResponseWriter, request *
 			h.logger.Error("Error fetching config document", zap.Error(err))
 			return
 		}
-	}
-	err = json.NewEncoder(writer).Encode(configuration)
+	} else {
+		err = json.NewEncoder(writer).Encode(configuration)
 
-	if err != nil {
-		http.Error(writer, "Internal server error", http.StatusInternalServerError)
-		h.logger.Error("Error serializing config json", zap.Error(err))
+		if err != nil {
+			http.Error(writer, "Internal server error", http.StatusInternalServerError)
+			h.logger.Error("Error serializing config json", zap.Error(err))
+		}
 	}
 }
 
@@ -72,11 +73,17 @@ func (h *Handlers) HandlePatch(userId int64, writer http.ResponseWriter, request
 		h.logger.Error("Error decoding configuration json", zap.Error(err))
 		return
 	}
-	err = h.repository.SaveBatch(userId, &configuration)
+	failedKeys, err := h.repository.SaveBatch(userId, &configuration)
 
 	if err != nil {
 		http.Error(writer, "Update failed", http.StatusInternalServerError)
 		h.logger.Error("Failed to batch update config entries", zap.Error(err))
+	}
+	err = json.NewEncoder(writer).Encode(failedKeys)
+
+	if err != nil {
+		http.Error(writer, "Internal server error", http.StatusInternalServerError)
+		h.logger.Error("Error serializing response", zap.Error(err))
 	}
 }
 
