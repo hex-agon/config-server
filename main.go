@@ -122,7 +122,7 @@ func main() {
 
 	router.GET("/config", authFilter.Filtered(handlers.HandleGet))
 	router.PUT("/config/:key", authFilter.Filtered(handlers.HandlePut))
-	router.PATCH("/config/:key", authFilter.Filtered(handlers.HandlePatch))
+	router.PATCH("/config", authFilter.Filtered(handlers.HandlePatch))
 	router.DELETE("/config/:key", authFilter.Filtered(handlers.HandleDelete))
 
 	logger.Info("Starting server on port " + cfg.Port)
