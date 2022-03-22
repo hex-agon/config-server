@@ -21,6 +21,8 @@ type config struct {
 	Port                 string `env:"PORT" envDefault:"8080"`
 	MongodbUri           string `env:"MONGODB_URI,required,notEmpty"`
 	MysqlUri             string `env:"MYSQL_URI,required,notEmpty"`
+	MysqlConnPool        int    `env:"MYSQL_POOL_SIZE" envDefault:"10"`
+	MysqlConnLifetime    int    `env:"MYSQL_CONN_LIFETIME" envDefault:"5"`
 	MaxPayloadBytes      int64  `env:"MAX_PAYLOAD_BYTES" envDefault:"5242880"` // 5mb default
 	MaxConfigValueLength int64  `env:"MAX_CONFIG_VALUE_LENGTH" envDefault:"262144"`
 	NewRelicLicense      string `env:"NR_LICENSE"`
@@ -76,9 +78,9 @@ func setupMysql(cfg *config, logger *zap.Logger) *sql.DB {
 	if err != nil {
 		logger.Fatal("Failed to ping mysql", zap.Error(err))
 	}
-	mysql.SetConnMaxLifetime(time.Minute * 3)
-	mysql.SetMaxOpenConns(10)
-	mysql.SetMaxIdleConns(10)
+	mysql.SetConnMaxLifetime(time.Minute * time.Duration(cfg.MysqlConnLifetime))
+	mysql.SetMaxOpenConns(cfg.MysqlConnPool)
+	mysql.SetMaxIdleConns(cfg.MysqlConnPool)
 	return mysql
 }
 
