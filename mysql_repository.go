@@ -27,3 +27,17 @@ func (m mysqlSessionRepository) FindUserIdByUuid(uuid string) (int64, error) {
 	}
 	return userId, nil
 }
+
+func (m mysqlSessionRepository) UpdateLastUsedByUuid(uuid string) error {
+	stmt, err := m.mysql.Prepare("UPDATE sessions SET last_used = now() WHERE uuid = ?")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(uuid)
+	if err != nil {
+		return err
+	}
+	return nil
+}

@@ -120,7 +120,11 @@ func main() {
 	router := nrhttprouter.New(nrelic)
 	handlers := NewHandlers(logger, NewConfigRepository(cfgCollection, cfg.MaxConfigValueLength))
 
-	authFilter := NewAuthFilter(NewSessionRepository(mysql))
+	sessionCache, err := NewSessionCache(NewSessionRepository(mysql), 10000)
+	if err != nil {
+		logger.Fatal("Failed to create session cache", zap.Error(err))
+	}
+	authFilter := NewAuthFilter(sessionCache)
 
 	router.GET("/config", authFilter.Filtered(handlers.HandleGet))
 	router.PUT("/config/:key", authFilter.Filtered(handlers.HandlePut))

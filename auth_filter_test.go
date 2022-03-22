@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-var filter AuthFilter
+var filter *AuthFilter
 
 func TestMain(m *testing.M) {
 	setup()
@@ -17,10 +17,10 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-type mockSessionRepository struct {
+type mockSessionCache struct {
 }
 
-func (m mockSessionRepository) FindUserIdByUuid(uuid string) (int64, error) {
+func (m mockSessionCache) GetUserId(uuid string) (int64, error) {
 	if uuid == "missing" {
 		return -1, sql.ErrNoRows
 	}
@@ -28,7 +28,7 @@ func (m mockSessionRepository) FindUserIdByUuid(uuid string) (int64, error) {
 }
 
 func setup() {
-	filter = NewAuthFilter(mockSessionRepository{})
+	filter = NewAuthFilter(mockSessionCache{})
 }
 
 func TestRequireAuthMissingToken(t *testing.T) {

@@ -18,4 +18,5 @@ type ConfigEntry struct {
 
 type SessionRepository interface {
 	FindUserIdByUuid(uuid string) (int64, error)
+	UpdateLastUsedByUuid(uuid string) error
 }

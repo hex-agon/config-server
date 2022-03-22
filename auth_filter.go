@@ -11,13 +11,11 @@ const authHeader = "Runelite-Auth"
 const ctxToken = "authToken"
 
 type AuthFilter struct {
-	repository SessionRepository
+	sessionCache SessionCache
 }
 
-func NewAuthFilter(repository SessionRepository) AuthFilter {
-	return AuthFilter{
-		repository: repository,
-	}
+func NewAuthFilter(cache SessionCache) *AuthFilter {
+	return &AuthFilter{sessionCache: cache}
 }
 
 func (a *AuthFilter) Filtered(
@@ -29,7 +27,7 @@ func (a *AuthFilter) Filtered(
 		if authToken == "" {
 			http.Error(writer, "Unauthorized", http.StatusUnauthorized)
 		} else {
-			userId, err := a.repository.FindUserIdByUuid(authToken)
+			userId, err := a.sessionCache.GetUserId(authToken)
 
 			if err == sql.ErrNoRows {
 				http.Error(writer, "Unauthorized", http.StatusUnauthorized)
