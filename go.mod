@@ -7,6 +7,7 @@ require (
 	github.com/dgraph-io/ristretto v0.1.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/julienschmidt/httprouter v1.3.0
+	github.com/newrelic/go-agent v3.15.2+incompatible
 	github.com/newrelic/go-agent/v3 v3.15.2
 	github.com/newrelic/go-agent/v3/integrations/nrhttprouter v1.0.1
 	github.com/newrelic/go-agent/v3/integrations/nrmongo v1.0.2

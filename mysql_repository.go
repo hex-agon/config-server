@@ -1,6 +1,10 @@
 package main
 
-import "database/sql"
+import (
+	"context"
+	"database/sql"
+	"github.com/newrelic/go-agent/v3/newrelic"
+)
 
 type mysqlSessionRepository struct {
 	mysql *sql.DB
@@ -12,7 +16,7 @@ func NewSessionRepository(mysql *sql.DB) SessionRepository {
 	}
 }
 
-func (m mysqlSessionRepository) FindUserIdByUuid(uuid string) (int64, error) {
+func (m mysqlSessionRepository) FindUserIdByUuid(ctx context.Context, uuid string) (int64, error) {
 	stmt, err := m.mysql.Prepare("SELECT user FROM sessions WHERE uuid = ?")
 	if err != nil {
 		return -1, err
@@ -20,7 +24,8 @@ func (m mysqlSessionRepository) FindUserIdByUuid(uuid string) (int64, error) {
 	defer stmt.Close()
 
 	var userId int64
-	err = stmt.QueryRow(uuid).Scan(&userId)
+	ctx = newrelic.NewContext(ctx, newrelic.FromContext(ctx))
+	err = stmt.QueryRowContext(ctx, uuid).Scan(&userId)
 
 	if err != nil {
 		return -1, err

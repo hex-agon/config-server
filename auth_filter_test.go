@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
@@ -20,7 +21,7 @@ func TestMain(m *testing.M) {
 type mockSessionCache struct {
 }
 
-func (m mockSessionCache) GetUserId(uuid string) (int64, error) {
+func (m mockSessionCache) GetUserId(ctx context.Context, uuid string) (int64, error) {
 	if uuid == "missing" {
 		return -1, sql.ErrNoRows
 	}

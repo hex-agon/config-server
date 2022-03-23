@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"github.com/caarlos0/env/v6"
 	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/newrelic/go-agent/_integrations/nrmysql"
 	"github.com/newrelic/go-agent/v3/integrations/nrhttprouter"
 	"github.com/newrelic/go-agent/v3/integrations/nrmongo"
 	"github.com/newrelic/go-agent/v3/newrelic"
@@ -73,7 +74,7 @@ func setupMongoDatabase(cfg *config, logger *zap.Logger) (*mongo.Client, *mongo.
 }
 
 func setupMysql(cfg *config, logger *zap.Logger) *sql.DB {
-	mysql, err := sql.Open("mysql", cfg.MysqlUri)
+	mysql, err := sql.Open("nrmysql", cfg.MysqlUri)
 	if err != nil {
 		logger.Fatal("Failed to connect to mysql", zap.Error(err))
 	}

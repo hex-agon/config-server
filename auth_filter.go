@@ -27,7 +27,7 @@ func (a *AuthFilter) Filtered(
 		if authToken == "" {
 			http.Error(writer, "Unauthorized", http.StatusUnauthorized)
 		} else {
-			userId, err := a.sessionCache.GetUserId(authToken)
+			userId, err := a.sessionCache.GetUserId(request.Context(), authToken)
 
 			if err == sql.ErrNoRows {
 				http.Error(writer, "Unauthorized", http.StatusUnauthorized)

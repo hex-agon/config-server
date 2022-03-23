@@ -1,9 +1,12 @@
 package main
 
-import "github.com/dgraph-io/ristretto"
+import (
+	"context"
+	"github.com/dgraph-io/ristretto"
+)
 
 type SessionCache interface {
-	GetUserId(uuid string) (int64, error)
+	GetUserId(context context.Context, uuid string) (int64, error)
 }
 
 type RistSessionCache struct {
@@ -31,12 +34,12 @@ func NewSessionCache(repository SessionRepository, cacheSize int64) (SessionCach
 	}, nil
 }
 
-func (c *RistSessionCache) GetUserId(uuid string) (int64, error) {
+func (c *RistSessionCache) GetUserId(ctx context.Context, uuid string) (int64, error) {
 	value, hit := c.cache.Get(uuid)
 	if hit {
 		return value.(int64), nil
 	}
-	userId, err := c.repository.FindUserIdByUuid(uuid)
+	userId, err := c.repository.FindUserIdByUuid(ctx, uuid)
 	if err != nil {
 		return -1, err
 	}
