@@ -40,6 +40,7 @@ func (c *RistSessionCache) GetUserId(uuid string) (int64, error) {
 	if err != nil {
 		return -1, err
 	}
+	c.cache.Set(uuid, userId, 1)
 	return userId, nil
 }
 
