@@ -23,7 +23,7 @@ func NewHandlers(logger *zap.Logger, repository ConfigRepository) *Handlers {
 }
 
 func (h *Handlers) HandleGet(userId int64, writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	configuration, err := h.repository.FindByUserId(userId)
+	configuration, err := h.repository.FindByUserId(request.Context(), userId)
 
 	if configuration == nil {
 		if err == nil {
@@ -53,7 +53,7 @@ func (h *Handlers) HandlePut(userId int64, writer http.ResponseWriter, request *
 		h.logger.Error("Failed to read request body", zap.Error(err))
 		return
 	}
-	err = h.repository.Save(userId, &ConfigEntry{
+	err = h.repository.Save(request.Context(), userId, &ConfigEntry{
 		Key:   key,
 		Value: string(value),
 	})
@@ -73,7 +73,7 @@ func (h *Handlers) HandlePatch(userId int64, writer http.ResponseWriter, request
 		h.logger.Error("Error decoding configuration json", zap.Error(err))
 		return
 	}
-	failedKeys, err := h.repository.SaveBatch(userId, &configuration)
+	failedKeys, err := h.repository.SaveBatch(request.Context(), userId, &configuration)
 
 	if err != nil {
 		http.Error(writer, "Update failed", http.StatusInternalServerError)
@@ -89,7 +89,7 @@ func (h *Handlers) HandlePatch(userId int64, writer http.ResponseWriter, request
 
 func (h *Handlers) HandleDelete(userId int64, writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	key := params.ByName("key")
-	err := h.repository.DeleteKey(userId, key)
+	err := h.repository.DeleteKey(request.Context(), userId, key)
 
 	if err != nil {
 		http.Error(writer, "Delete failed", http.StatusInternalServerError)

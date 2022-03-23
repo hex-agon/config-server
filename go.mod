@@ -9,6 +9,7 @@ require (
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/newrelic/go-agent/v3 v3.15.2
 	github.com/newrelic/go-agent/v3/integrations/nrhttprouter v1.0.1
+	github.com/newrelic/go-agent/v3/integrations/nrmongo v1.0.2
 	go.mongodb.org/mongo-driver v1.8.4
 	go.uber.org/zap v1.21.0
 )

@@ -1,10 +1,12 @@
 package main
 
+import "context"
+
 type ConfigRepository interface {
-	FindByUserId(userId int64) (*Configuration, error)
-	Save(userId int64, entry *ConfigEntry) error
-	SaveBatch(userId int64, configuration *Configuration) ([]string, error)
-	DeleteKey(userId int64, key string) error
+	FindByUserId(ctx context.Context, userId int64) (*Configuration, error)
+	Save(ctx context.Context, userId int64, entry *ConfigEntry) error
+	SaveBatch(ctx context.Context, userId int64, configuration *Configuration) ([]string, error)
+	DeleteKey(ctx context.Context, userId int64, key string) error
 }
 
 type Configuration struct {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/newrelic/go-agent/v3/newrelic"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -86,8 +87,9 @@ func deserializeGroupValue(value string, maxLength int64) (interface{}, error) {
 	return value, nil
 }
 
-func (m *mongoConfigRepository) FindByUserId(userId int64) (*Configuration, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+func (m *mongoConfigRepository) FindByUserId(ctx context.Context, userId int64) (*Configuration, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx = newrelic.NewContext(ctx, newrelic.FromContext(ctx))
 	defer cancel()
 
 	var document map[string]interface{}
@@ -114,7 +116,7 @@ func (m *mongoConfigRepository) FindByUserId(userId int64) (*Configuration, erro
 	}
 }
 
-func (m *mongoConfigRepository) Save(userId int64, entry *ConfigEntry) error {
+func (m *mongoConfigRepository) Save(ctx context.Context, userId int64, entry *ConfigEntry) error {
 	key := entry.Key
 
 	if invalidConfigKey(key) {
@@ -127,14 +129,15 @@ func (m *mongoConfigRepository) Save(userId int64, entry *ConfigEntry) error {
 	}
 	update := bson.M{"$set": bson.M{sanitizeConfigKey(key): value}}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	ctx = newrelic.NewContext(ctx, newrelic.FromContext(ctx))
 	defer cancel()
 	_, err = m.collection.UpdateOne(ctx, bson.M{"_userId": userId}, update, options.Update().SetUpsert(true))
 
 	return err
 }
 
-func (m *mongoConfigRepository) SaveBatch(userId int64, configuration *Configuration) ([]string, error) {
+func (m *mongoConfigRepository) SaveBatch(ctx context.Context, userId int64, configuration *Configuration) ([]string, error) {
 	entries := bson.M{}
 	failedKeys := make([]string, 0)
 	for _, entry := range configuration.Config {
@@ -152,19 +155,21 @@ func (m *mongoConfigRepository) SaveBatch(userId int64, configuration *Configura
 	}
 	update := bson.M{"$set": entries}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	ctx = newrelic.NewContext(ctx, newrelic.FromContext(ctx))
 	defer cancel()
 	_, err := m.collection.UpdateOne(ctx, bson.M{"_userId": userId}, update, options.Update().SetUpsert(true))
 	return failedKeys, err
 }
 
-func (m *mongoConfigRepository) DeleteKey(userId int64, key string) error {
+func (m *mongoConfigRepository) DeleteKey(ctx context.Context, userId int64, key string) error {
 	if invalidConfigKey(key) {
 		return errors.New("invalid config key")
 	}
 	unset := bson.M{"$unset": bson.M{sanitizeConfigKey(key): nil}}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	ctx = newrelic.NewContext(ctx, newrelic.FromContext(ctx))
 	defer cancel()
 	_, err := m.collection.UpdateOne(ctx, bson.M{"_userId": userId}, unset)
 	return err
