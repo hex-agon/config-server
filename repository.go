@@ -20,5 +20,5 @@ type ConfigEntry struct {
 
 type SessionRepository interface {
 	FindUserIdByUuid(ctx context.Context, uuid string) (int64, error)
-	UpdateLastUsedByUuid(uuid string) error
+	UpdateLastUsedByUserId(userId int64) error
 }

@@ -22,7 +22,7 @@ func NewSessionCache(repository SessionRepository, cacheSize int64) (SessionCach
 		MaxCost:     cacheSize,
 		BufferItems: 64,
 		OnEvict: func(item *ristretto.Item) {
-			go updateEvicted(item.Value.(string), repository)
+			go updateEvicted(item.Value.(int64), repository)
 		},
 	})
 
@@ -48,6 +48,6 @@ func (c *RistSessionCache) GetUserId(ctx context.Context, uuid string) (int64, e
 	return userId, nil
 }
 
-func updateEvicted(uuid string, repository SessionRepository) {
-	_ = repository.UpdateLastUsedByUuid(uuid)
+func updateEvicted(userId int64, repository SessionRepository) {
+	_ = repository.UpdateLastUsedByUserId(userId)
 }

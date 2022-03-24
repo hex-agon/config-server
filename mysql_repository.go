@@ -33,14 +33,14 @@ func (m mysqlSessionRepository) FindUserIdByUuid(ctx context.Context, uuid strin
 	return userId, nil
 }
 
-func (m mysqlSessionRepository) UpdateLastUsedByUuid(uuid string) error {
-	stmt, err := m.mysql.Prepare("UPDATE sessions SET last_used = now() WHERE uuid = ?")
+func (m mysqlSessionRepository) UpdateLastUsedByUserId(userId int64) error {
+	stmt, err := m.mysql.Prepare("UPDATE sessions SET last_used = now() WHERE user = ?")
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(uuid)
+	_, err = stmt.Exec(userId)
 	if err != nil {
 		return err
 	}
