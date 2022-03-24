@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"github.com/dgraph-io/ristretto"
+	"time"
 )
 
 type SessionCache interface {
@@ -43,7 +44,7 @@ func (c *RistSessionCache) GetUserId(ctx context.Context, uuid string) (int64, e
 	if err != nil {
 		return -1, err
 	}
-	c.cache.Set(uuid, userId, 1)
+	c.cache.SetWithTTL(uuid, userId, 1, 30*time.Minute)
 	return userId, nil
 }
 
